@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 测试页面 - 职能沟通翻译助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .header h1 {
+            color: #00ff00;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #3d3d3d;
+            border-radius: 5px;
+        }
+
+        .test-title {
+            color: #ffff00;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .test-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        select,
+        textarea,
+        button {
+            padding: 10px;
+            background: #1a1a1a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 3px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .response-section {
+            margin-top: 20px;
+        }
+
+        .response-header {
+            color: #ff00ff;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .response-content {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 3px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+
+        .status {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+
+        .status.success {
+            background: #008000;
+            color: white;
+        }
+
+        .status.error {
+            background: #ff0000;
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #ffff00;
+        }
+
+        .spinner {
+            border: 2px solid #3d3d3d;
+            border-top: 2px solid #ffff00;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .endpoint-info {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00ff00;
+        }
+
+        .endpoint-info code {
+            color: #ffff00;
+            background: #2d2d2d;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .tab-container {
+            margin-top: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab.active {
+            background: #00ff00;
+            color: #1a1a1a;
+            border-color: #00ff00;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 API 测试控制台</h1>
+            <p>职能沟通翻译助手 - 接口测试页面</p>
+        </div>
+
+        <div class="endpoint-info">
+            <strong>测试端点：</strong>
+            <code>POST /api/ai/translation/translate</code>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">
+                <span>🧪 翻译接口测试</span>
+            </div>
+
+            <div class="test-controls">
+                <div class="input-group">
+                    <label for="test-type">翻译类型：</label>
+                    <select id="test-type">
+                        <option value="product_to_tech">产品经理 → 开发工程师</option>
+                        <option value="tech_to_product">开发工程师 → 产品经理</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="test-content">测试内容：</label>
+                    <textarea id="test-content" placeholder="输入测试内容..."></textarea>
+                </div>
+            </div>
+
+            <button onclick="runTest()" id="test-btn">执行测试 🚀</button>
+
+            <div class="loading" id="test-loading">
+                <div class="spinner"></div>
+                <p>测试进行中...</p>
+            </div>
+
+            <div class="response-section">
+                <div class="response-header">
+                    <span>响应结果：</span>
+                    <span class="status" id="test-status">等待测试</span>
+                </div>
+                <div class="response-content" id="test-response">{
+                    "status": "等待测试请求..."
+                    }</div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('health')">健康检查</div>
+                <div class="tab" onclick="switchTab('examples')">测试用例</div>
+                <div class="tab" onclick="switchTab('curl')">cURL 命令</div>
+            </div>
+
+            <div class="tab-content active" id="health-tab">
+                <button onclick="testHealth()">检查服务状态</button>
+                <div class="response-content" id="health-response">点击按钮检查服务状态...</div>
+            </div>
+
+            <div class="tab-content" id="examples-tab">
+                <div class="test-controls">
+                    <div class="input-group">
+                        <label>产品经理 → 开发工程师示例：</label>
+                        <textarea readonly>我们需要一个图片上传功能，支持JPG、PNG格式，最大10MB，要有进度显示和缩略图预览。</textarea>
+                        <button onclick="loadExample('product_example')">加载此示例</button>
+                    </div>
+                    <div class="input-group">
+                        <label>开发工程师 → 产品经理示例：</label>
+                        <textarea readonly>技术方案：使用Multer处理文件上传，Cloudinary进行图片存储和CDN分发，前端使用axios实现分块上传和进度监控。</textarea>
+                        <button onclick="loadExample('tech_example')">加载此示例</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="curl-tab">
+                <div class="input-group">
+                    <label>cURL 命令：</label>
+                    <textarea id="curl-command" readonly rows="6">curl -X POST http://localhost:3000/api/ai/translation/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "product_to_tech",
+    "content": "示例内容",
+    "options": {
+      "temperature": 0.7,
+      "maxTokens": 800
+    }
+  }'</textarea>
+                    <button onclick="updateCurlCommand()">更新命令</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runTest() {
+            const testType = document.getElementById('test-type').value;
+            const testContent = document.getElementById('test-content').value.trim();
+            const testBtn = document.getElementById('test-btn');
+            const testLoading = document.getElementById('test-loading');
+            const testStatus = document.getElementById('test-status');
+            const testResponse = document.getElementById('test-response');
+
+            if (!testContent) {
+                alert('请输入测试内容');
+                return;
+            }
+
+            testBtn.disabled = true;
+            testLoading.style.display = 'block';
+            testStatus.textContent = '测试中...';
+            testStatus.className = 'status';
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch('/api/ai/translation/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: testType,
+                        content: testContent,
+                        options: {
+                            temperature: 0.7,
+                            maxTokens: 800
+                        }
+                    })
+                });
+
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                const data = await response.json();
+
+                testResponse.textContent = JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    responseTime: responseTime + 'ms',
+                    statusCode: response.status,
+                    data: data
+                }, null, 2);
+
+                if (response.ok) {
+                    testStatus.textContent = '成功 ✓';
+                    testStatus.className = 'status success';
+                } else {
+                    testStatus.textContent = '错误 ✗';
+                    testStatus.className = 'status error';
+                }
+
+            } catch (error) {
+                testResponse.textContent = JSON.stringify({
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                }, null, 2);
+                testStatus.textContent = '异常 ✗';
+                testStatus.className = 'status error';
+            } finally {
+                testBtn.disabled = false;
+                testLoading.style.display = 'none';
+            }
+        }
+
+        async function testHealth() {
+            const healthResponse = document.getElementById('health-response');
+
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                healthResponse.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                healthResponse.textContent = JSON.stringify({
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                }, null, 2);
+            }
+        }
+
+        function loadExample(type) {
+            const examples = {
+                'product_example': '我们需要一个图片上传功能，支持JPG、PNG格式，最大10MB，要有进度显示和缩略图预览。',
+                'tech_example': '技术方案：使用Multer处理文件上传，Cloudinary进行图片存储和CDN分发，前端使用axios实现分块上传和进度监控。'
+            };
+
+            document.getElementById('test-content').value = examples[type] || '';
+            document.getElementById('test-type').value = type === 'product_example' ?
+                'product_to_tech' : 'tech_to_product';
+        }
+
+        function updateCurlCommand() {
+            const testType = document.getElementById('test-type').value;
+            const testContent = document.getElementById('test-content').value;
+
+            const curlCommand = `curl -X POST http://localhost:3000/api/ai/translation/translate \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "type": "${testType}",
+    "content": "${testContent.replace(/\n/g, '\\n')}",
+    "options": {
+      "temperature": 0.7,
+      "maxTokens": 800
+    }
+  }'`;
+
+            document.getElementById('curl-command').value = curlCommand;
+        }
+
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 取消所有标签的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签内容
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // 激活选中的标签
+            event.target.classList.add('active');
+        }
+
+        // 初始化cURL命令
+        updateCurlCommand();
+    </script>
+</body>
+
+</html>

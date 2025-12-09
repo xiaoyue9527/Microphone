@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职能沟通翻译聊天室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 90vh;
+        }
+
+        .sidebar {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            max-height: 1200px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .status {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .status.connected {
+            color: #28a745;
+        }
+
+        .status.disconnected {
+            color: #dc3545;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .message.own {
+            align-self: flex-end;
+            background: #007bff;
+            color: white;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+
+        .message.system {
+            align-self: center;
+            background: #6c757d;
+            color: white;
+            max-width: 50%;
+            text-align: center;
+        }
+
+        .message.selected {
+            box-shadow: 0 0 0 2px #28a745;
+        }
+
+        .message-info {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .action-button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.7em;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            color: inherit;
+        }
+
+        .action-button.primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .translation-result {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #28a745;
+            font-size: 0.9em;
+        }
+
+        .translation-header {
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 5px;
+        }
+
+        .translation-context {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .send-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .user-list {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 8px;
+            margin: 3px 0;
+            background: #3d5166;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-role {
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .role-pm {
+            background: #e74c3c;
+        }
+
+        .role-dev {
+            background: #3498db;
+        }
+
+        .login-panel {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background: #2c3e50;
+            color: white;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .room-info {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .selection-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .selected-count {
+            align-self: center;
+            color: #28a745;
+            font-size: 0.9em;
+        }
+
+        .translation-type {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="login-panel" id="loginPanel">
+                <h3>加入聊天室</h3>
+                <div class="form-group">
+                    <label>你的名称</label>
+                    <input type="text" id="userName" placeholder="输入你的名字" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>选择角色</label>
+                    <select id="userRole">
+                        <option value="product_manager">产品经理</option>
+                        <option value="developer">开发工程师</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>房间名称</label>
+                    <input type="text" id="roomName" placeholder="输入房间名称">
+                </div>
+                <button class="action-button" id="joinButton">加入房间</button>
+            </div>
+
+            <div class="hidden" id="roomSection">
+                <div class="room-info">
+                    <h4>当前房间</h4>
+                    <div id="currentRoomInfo"></div>
+                    <button class="action-button" id="leaveButton"
+                        style="background: #e74c3c; margin-top: 10px;">离开房间</button>
+                </div>
+
+                <div class="user-list">
+                    <h4>在线用户</h4>
+                    <div id="userList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>职能沟通翻译聊天室</h1>
+                <div class="status" id="connectionStatus">未连接</div>
+            </div>
+
+            <div class="selection-controls hidden" id="selectionControls">
+                <button class="action-button primary" id="translateSelectedButton">翻译选中消息</button>
+                <button class="action-button secondary" id="cancelSelectionButton">取消选中</button>
+                <div class="selected-count" id="selectedCount">已选中 0 条消息</div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    欢迎使用职能沟通翻译聊天室！输入用户名和角色后加入房间开始聊天。
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea class="message-input" id="messageInput" placeholder="输入消息...（Enter发送，Shift+Enter换行）" disabled
+                    rows="3"></textarea>
+                <button class="send-button" id="sendButton" disabled>发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChatRoom {
+            constructor() {
+                this.ws = null;
+                this.userId = null;
+                this.userName = null;
+                this.userRole = null;
+                this.currentRoom = null;
+                this.isConnected = false;
+                this.selectedMessages = new Set();
+                this.messageHistory = [];
+                this.isSelecting = false;
+
+                this.initializeEventListeners();
+                this.connect();
+            }
+
+            initializeEventListeners() {
+                const messageInput = document.getElementById('messageInput');
+                const sendButton = document.getElementById('sendButton');
+                const joinButton = document.getElementById('joinButton');
+                const leaveButton = document.getElementById('leaveButton');
+                const translateSelectedButton = document.getElementById('translateSelectedButton');
+                const cancelSelectionButton = document.getElementById('cancelSelectionButton');
+
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                sendButton.addEventListener('click', () => this.sendMessage());
+                joinButton.addEventListener('click', () => this.joinRoomHandler());
+                leaveButton.addEventListener('click', () => this.leaveRoom());
+                translateSelectedButton.addEventListener('click', () => this.translateSelectedMessages());
+                cancelSelectionButton.addEventListener('click', () => this.cancelSelection());
+            }
+
+            connect() {
+                const wsUrl = `ws://${window.location.hostname}:8080`;
+                this.ws = new WebSocket(wsUrl);
+
+                this.ws.onopen = () => {
+                    this.isConnected = true;
+                    this.updateConnectionStatus('connected', '已连接');
+                };
+
+                this.ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    this.handleMessage(message);
+                };
+
+                this.ws.onclose = () => {
+                    this.isConnected = false;
+                    this.updateConnectionStatus('disconnected', '连接断开');
+                    this.resetUI();
+
+                    // 5秒后重连
+                    setTimeout(() => this.connect(), 5000);
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket错误:', error);
+                    this.updateConnectionStatus('disconnected', '连接错误');
+                };
+            }
+
+            joinRoomHandler() {
+                const userName = document.getElementById('userName').value.trim();
+                const userRole = document.getElementById('userRole').value;
+                const roomName = document.getElementById('roomName').value.trim();
+
+                if (!userName) {
+                    this.showError('请输入你的名称');
+                    return;
+                }
+
+                if (!roomName) {
+                    this.showError('请输入房间名称');
+                    return;
+                }
+
+                this.joinRoom(userName, userRole, roomName);
+            }
+
+            handleMessage(message) {
+                switch (message.type) {
+                    case 'connection_established':
+                        this.userId = message.payload.userId;
+                        break;
+
+                    case 'room_joined':
+                        this.handleRoomJoined(message.payload);
+                        break;
+
+                    case 'user_joined':
+                        this.handleUserJoined(message.payload);
+                        break;
+
+                    case 'user_left':
+                        this.handleUserLeft(message.payload);
+                        break;
+
+                    case 'chat_message':
+                        this.displayChatMessage(message.payload);
+                        break;
+
+                    case 'error':
+                        this.showError(message.payload.error);
+                        break;
+
+                    case 'user_list':
+                        this.updateUserList(message.payload.users);
+                        break;
+                }
+            }
+
+            joinRoom(userName, userRole, roomName) {
+                if (!this.isConnected) {
+                    this.showError('未连接到服务器');
+                    return false;
+                }
+
+                this.userName = userName;
+                this.userRole = userRole;
+
+                this.send({
+                    type: 'join_room',
+                    payload: { userName, userRole, roomName }
+                });
+
+                return true;
+            }
+
+            handleRoomJoined(payload) {
+                this.currentRoom = payload;
+                this.showRoomSection();
+                this.updateUserList(payload.users);
+                this.addSystemMessage(`成功加入房间 "${payload.roomName}"`);
+
+                // 启用消息输入
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendButton').disabled = false;
+            }
+
+            handleUserJoined(payload) {
+                this.updateUserList(payload.users);
+                this.addSystemMessage(`${payload.user.name} 加入了房间`);
+            }
+
+            handleUserLeft(payload) {
+                this.updateUserList(payload.users);
+                this.addSystemMessage(`${payload.user.name} 离开了房间`);
+            }
+
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const content = input.value.trim();
+
+                if (!content) return;
+
+                this.send({
+                    type: 'chat_message',
+                    payload: { content }
+                });
+
+                // 显示自己发送的消息
+                this.displayOwnMessage(content);
+
+                input.value = '';
+            }
+
+            displayOwnMessage(content) {
+                const messageId = this.generateMessageId();
+                const messageElement = this.createMessageElement({
+                    id: messageId,
+                    userName: this.userName,
+                    userRole: this.userRole,
+                    content: content,
+                    timestamp: Date.now(),
+                    isOwn: true
+                });
+
+                document.getElementById('chatMessages').appendChild(messageElement);
+                this.scrollToBottom();
+            }
+
+            displayChatMessage(message) {
+                // 确保消息有有效的ID
+                if (!message.id || typeof message.id !== 'string') {
+                    message.id = this.generateMessageId();
+                }
+
+                const isOwn = message.userId === this.userId;
+                const messageElement = this.createMessageElement({
+                    ...message,
+                    isOwn: isOwn
+                });
+
+                // 存储消息记录
+                this.messageHistory.push({
+                    id: message.id,
+                    userId: message.userId,
+                    userName: message.userName,
+                    userRole: message.userRole,
+                    content: message.content,
+                    timestamp: message.timestamp
+                });
+
+                document.getElementById('chatMessages').appendChild(messageElement);
+                this.scrollToBottom();
+            }
+
+            createMessageElement(message) {
+                const container = document.createElement('div');
+                container.className = 'message-container';
+                container.dataset.id = message.id;
+                container.dataset.userId = message.userId;
+                container.dataset.userName = message.userName;
+                container.dataset.userRole = message.userRole;
+                container.dataset.timestamp = message.timestamp;
+                container.dataset.content = message.content;
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.isOwn ? 'own' : 'other'}`;
+                messageDiv.dataset.id = message.id;
+
+                const messageInfo = document.createElement('div');
+                messageInfo.className = 'message-info';
+                messageInfo.innerHTML = `
+                    ${message.userName} 
+                    <span class="user-role ${message.userRole === 'product_manager' ? 'role-pm' : 'role-dev'}">
+                        ${this.getRoleName(message.userRole)}
+                    </span>
+                    • ${new Date(message.timestamp).toLocaleTimeString()}
+                `;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.innerHTML = this.escapeHtml(message.content).replace(/\n/g, '<br>');
+
+                messageDiv.appendChild(messageInfo);
+                messageDiv.appendChild(contentDiv);
+
+                // 如果不是自己的消息，添加翻译按钮
+                if (!message.isOwn) {
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'message-actions';
+
+                    const translateButton = document.createElement('button');
+                    translateButton.className = 'action-button';
+                    translateButton.innerHTML = '翻译';
+                    translateButton.title = '翻译此消息及之前的对话';
+
+                    translateButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectMessagesForTranslation(message.id);
+                    });
+
+                    actionsDiv.appendChild(translateButton);
+                    messageDiv.appendChild(actionsDiv);
+                }
+
+                // 点击消息进行选择
+                messageDiv.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('action-button')) {
+                        this.toggleMessageSelection(message.id);
+                    }
+                });
+
+                container.appendChild(messageDiv);
+                return container;
+            }
+
+            // 为翻译选择消息
+            selectMessagesForTranslation(messageId) {
+                this.cancelSelection(); // 先清除之前的选中状态
+
+                const startIndex = this.messageHistory.findIndex(msg => msg.id === messageId);
+                if (startIndex === -1) return;
+
+                // 找到从当前消息到上一条不同角色消息的所有消息
+                const startMessage = this.messageHistory[startIndex];
+                const selectedMessages = [];
+
+                for (let i = startIndex; i >= 0; i--) {
+                    const msg = this.messageHistory[i];
+                    selectedMessages.push(msg.id);
+                    // 如果找到了一条不同角色的消息，并且这不是第一条消息
+                    if (i > 0 && msg.userRole !== startMessage.userRole) {
+                        break;
+                    }
+                }
+
+                // 选中这些消息
+                selectedMessages.forEach(msgId => {
+                    this.selectedMessages.add(msgId);
+                    this.updateMessageSelection(msgId, true);
+                });
+
+                this.updateSelectionControls();
+            }
+
+            // 切换消息选中状态
+            toggleMessageSelection(messageId) {
+                if (this.selectedMessages.has(messageId)) {
+                    this.selectedMessages.delete(messageId);
+                } else {
+                    this.selectedMessages.add(messageId);
+                }
+                this.updateMessageSelection(messageId, this.selectedMessages.has(messageId));
+                this.updateSelectionControls();
+            }
+
+            // 更新消息选中状态
+            updateMessageSelection(messageId, selected) {
+                const messageDiv = document.querySelector(`.message[data-id="${messageId}"]`);
+                if (messageDiv) {
+                    if (selected) {
+                        messageDiv.classList.add('selected');
+                    } else {
+                        messageDiv.classList.remove('selected');
+                    }
+                }
+            }
+
+            // 翻译选中的消息
+            async translateSelectedMessages() {
+                if (this.selectedMessages.size === 0) {
+                    this.showError('请先选择要翻译的消息');
+                    return;
+                }
+
+                const messages = Array.from(this.selectedMessages)
+                    .map(id => this.messageHistory.find(msg => msg.id === id))
+                    .filter(msg => msg)
+                    .sort((a, b) => a.timestamp - b.timestamp);
+
+                if (messages.length === 0) return;
+
+                const lastMessage = messages[messages.length - 1];
+                const translationType = this.getTranslationType(lastMessage.userRole, this.userRole);
+
+                if (!translationType) {
+                    this.showError('无需翻译：相同角色间的消息');
+                    return;
+                }
+
+                const button = document.getElementById('translateSelectedButton');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="loading"></span>翻译中...';
+                button.disabled = true;
+
+                try {
+                    // 构建翻译内容
+                    const messageText = messages.map(msg =>
+                        `[${msg.userName} (${this.getRoleName(msg.userRole)})]: ${msg.content}`
+                    ).join('\n');
+
+                    const response = await fetch('/api/ai/translation/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: translationType,
+                            content: messageText
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showSelectedMessagesTranslation(messages, result.data.translated, translationType);
+                        this.cancelSelection();
+                    } else {
+                        this.showError('翻译失败: ' + result.error);
+                    }
+                } catch (error) {
+                    this.showError('翻译请求失败: ' + error.message);
+                } finally {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            }
+
+            showSelectedMessagesTranslation(messages, translatedContent, translationType) {
+                const lastMessage = messages[messages.length - 1];
+                const container = document.querySelector(`.message-container[data-id="${lastMessage.id}"]`);
+                if (!container) return;
+
+                let existingTranslation = container.querySelector('.translation-result');
+                if (existingTranslation) {
+                    existingTranslation.remove();
+                }
+
+                existingTranslation = document.createElement('div');
+                existingTranslation.className = 'translation-result';
+
+                const directionText = translationType === 'product_to_tech'
+                    ? '产品需求 → 技术方案'
+                    : '技术方案 → 产品需求';
+
+                const contextText = `翻译了 ${messages.length} 条消息`;
+
+                existingTranslation.innerHTML = `
+                    <div class="translation-header">${directionText}</div>
+                    <div class="translation-context">${contextText}</div>
+                    <div>${this.escapeHtml(translatedContent).replace(/\n/g, '<br>')}</div>
+                `;
+
+                container.appendChild(existingTranslation);
+                this.scrollToBottom();
+            }
+
+            // 更新选择控制
+            updateSelectionControls() {
+                const selectionControls = document.getElementById('selectionControls');
+                const selectedCount = document.getElementById('selectedCount');
+
+                if (this.selectedMessages.size > 0) {
+                    selectionControls.classList.remove('hidden');
+                    selectedCount.textContent = `已选中 ${this.selectedMessages.size} 条消息`;
+                } else {
+                    selectionControls.classList.add('hidden');
+                }
+            }
+
+            // 取消选择
+            cancelSelection() {
+                this.selectedMessages.forEach(msgId => {
+                    this.updateMessageSelection(msgId, false);
+                });
+                this.selectedMessages.clear();
+                this.updateSelectionControls();
+            }
+
+            getTranslationType(fromRole, toRole) {
+                if (fromRole === 'product_manager' && toRole === 'developer') {
+                    return 'product_to_tech';
+                } else if (fromRole === 'developer' && toRole === 'product_manager') {
+                    return 'tech_to_product';
+                }
+                return null;
+            }
+
+            generateMessageId() {
+                return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            leaveRoom() {
+                if (this.currentRoom) {
+                    this.send({ type: 'leave_room', payload: {} });
+                    this.resetUI();
+                    this.addSystemMessage('已离开房间');
+                }
+            }
+
+            addSystemMessage(content) {
+                const messagesContainer = document.getElementById('chatMessages');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message system';
+                messageElement.textContent = content;
+                messagesContainer.appendChild(messageElement);
+                this.scrollToBottom();
+            }
+
+            showRoomSection() {
+                document.getElementById('loginPanel').classList.add('hidden');
+                document.getElementById('roomSection').classList.remove('hidden');
+
+                if (this.currentRoom) {
+                    document.getElementById('currentRoomInfo').innerHTML = `
+                        <strong>${this.currentRoom.roomName}</strong><br>
+                        <small>用户数: ${this.currentRoom.userCount || 0}</small>
+                    `;
+                }
+            }
+
+            updateUserList(users) {
+                if (!users || !Array.isArray(users)) {
+                    console.error('Invalid users data:', users);
+                    return;
+                }
+
+                const userList = document.getElementById('userList');
+                userList.innerHTML = users.map(user => `
+                    <div class="user-item">
+                        <span>${user.name}</span>
+                        <span class="user-role ${user.role === 'product_manager' ? 'role-pm' : 'role-dev'}">
+                            ${this.getRoleName(user.role)}
+                        </span>
+                    </div>
+                `).join('');
+
+                if (this.currentRoom) {
+                    this.currentRoom.userCount = users.length;
+                    document.getElementById('currentRoomInfo').innerHTML = `
+                        <strong>${this.currentRoom.roomName}</strong><br>
+                        <small>用户数: ${users.length}</small>
+                    `;
+                }
+            }
+
+            getRoleName(role) {
+                return role === 'product_manager' ? '产品经理' : '开发工程师';
+            }
+
+            updateConnectionStatus(status, text) {
+                const statusElement = document.getElementById('connectionStatus');
+                statusElement.textContent = text;
+                statusElement.className = `status ${status}`;
+            }
+
+            showError(error) {
+                this.addSystemMessage(`错误: ${error}`);
+            }
+
+            resetUI() {
+                document.getElementById('loginPanel').classList.remove('hidden');
+                document.getElementById('roomSection').classList.add('hidden');
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendButton').disabled = true;
+                document.getElementById('selectionControls').classList.add('hidden');
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="message system">
+                        欢迎使用职能沟通翻译聊天室！输入用户名和角色后加入房间开始聊天。
+                    </div>
+                `;
+                this.currentRoom = null;
+                this.userName = null;
+                this.userRole = null;
+                this.messageHistory = [];
+                this.selectedMessages.clear();
+            }
+
+            scrollToBottom() {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            send(message) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(message));
+                }
+            }
+        }
+
+        // 初始化聊天室
+        const chatRoom = new ChatRoom();
+    </script>
+</body>
+
+</html>

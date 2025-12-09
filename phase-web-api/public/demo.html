@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职能沟通翻译助手 - 演示页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section,
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        select,
+        textarea,
+        button {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .output-content {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #3498db;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #e74c3c;
+            background: #ffeaea;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success {
+            color: #27ae60;
+            background: #eafaf1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .usage-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 确保消息ID选择器有效 */
+        .message-container {
+            position: relative;
+        }
+
+        .message-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: inherit;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 职能沟通翻译助手</h1>
+            <p>打破产品与开发之间的沟通壁垒</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 输入内容</h2>
+
+                <div class="form-group">
+                    <label for="translation-type">翻译方向：</label>
+                    <select id="translation-type">
+                        <option value="product_to_tech">产品经理 → 开发工程师</option>
+                        <option value="tech_to_product">开发工程师 → 产品经理</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-content">待翻译内容：</label>
+                    <textarea id="input-content" placeholder="请输入需要翻译的内容..."></textarea>
+                </div>
+
+                <button id="translate-btn" onclick="translateContent()">开始翻译 ✨</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>AI正在努力翻译中，请稍候...</p>
+                </div>
+
+                <div class="error" id="error-message"></div>
+                <div class="success" id="success-message"></div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">📄 翻译结果</h2>
+                <div class="output-content" id="output-content">
+                    翻译结果将显示在这里...
+                </div>
+
+                <div class="usage-info" id="usage-info" style="display: none;">
+                    <strong>使用统计：</strong>
+                    <span id="token-info"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 职能沟通翻译助手 | 版本 1.0.0 | 基于 OpenAI GPT 技术</p>
+        </div>
+    </div>
+
+    <script>
+        async function translateContent() {
+            const inputContent = document.getElementById('input-content').value.trim();
+            const translationType = document.getElementById('translation-type').value;
+            const translateBtn = document.getElementById('translate-btn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const outputContent = document.getElementById('output-content');
+            const usageInfo = document.getElementById('usage-info');
+            const tokenInfo = document.getElementById('token-info');
+
+            // 重置状态
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            usageInfo.style.display = 'none';
+
+            // 验证输入
+            if (!inputContent) {
+                showError('请输入要翻译的内容');
+                return;
+            }
+
+            if (inputContent.length > 5000) {
+                showError('输入内容过长，请控制在5000字符以内');
+                return;
+            }
+
+            // 显示加载状态
+            translateBtn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/ai/translation/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: translationType,
+                        content: inputContent,
+                        options: {
+                            temperature: 0.7
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '翻译服务暂时不可用');
+                }
+
+                if (data.success) {
+                    outputContent.textContent = data.data.translated;
+
+                    // 显示使用统计
+                    if (data.data.usage) {
+                        tokenInfo.textContent =
+                            `Prompt Tokens: ${data.data.usage.prompt_tokens} | ` +
+                            `Completion Tokens: ${data.data.usage.completion_tokens} | ` +
+                            `Total Tokens: ${data.data.usage.total_tokens}`;
+                        usageInfo.style.display = 'block';
+                    }
+
+                    showSuccess('翻译完成！');
+                } else {
+                    throw new Error(data.error || '翻译失败');
+                }
+
+            } catch (error) {
+                console.error('翻译错误:', error);
+                showError('翻译失败: ' + error.message);
+                outputContent.textContent = '翻译过程中出现错误，请重试。';
+            } finally {
+                translateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+        }
+
+        // 示例内容填充
+        document.getElementById('translation-type').addEventListener('change', function () {
+            const examples = {
+                'product_to_tech': `我们需要一个用户注册功能，要求：
+- 用户可以通过邮箱和密码注册
+- 注册后需要邮箱验证
+- 可以第三方登录（微信、微博）
+- 注册流程要简单，不超过3步`,
+
+                'tech_to_product': `技术方案：使用JWT进行用户认证，Redis缓存会话数据，MySQL存储用户信息。
+实现步骤：
+1. 用户提交邮箱密码
+2. 后端验证并发送验证邮件
+3. 用户点击邮件链接完成验证
+4. 生成JWT token返回给前端`
+            };
+
+            const currentType = this.value;
+            if (examples[currentType]) {
+                document.getElementById('input-content').value = examples[currentType];
+            }
+        });
+
+        // 页面加载时填充示例
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('translation-type').dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+
+</html>
