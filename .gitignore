@@ -1,0 +1,53 @@
+# 依赖目录
+node_modules/
+.pnp/
+.pnp.js
+.yarn/install-state.gz
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 运行时数据
+.pnpm-store/
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# 构建输出
+dist/
+build/
+.next/
+.nuxt/
+.output/
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 缓存
+.cache/
+
+# 操作系统文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 脚本
+.sh
+.bat
